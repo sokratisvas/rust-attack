@@ -1,0 +1,37 @@
+use std::env;
+use std::fs::File;
+use std::io::{self, prelude::*, BufReader};
+
+pub fn file_contents(filename: String) -> io::Result<Vec<String>> {
+    let mut contents = Vec::new();
+    let file = File::open(filename).expect("Something went wrong reading the file");
+
+    let reader = BufReader::new(file);
+    for line in reader.lines() {
+        contents.push(line?);
+    }
+
+    Ok(contents)
+}
+
+pub fn remove_comments(mut contents: Vec<String>) -> Vec<String> {
+    let mut tokens = Vec::new();
+    for mut line in contents {
+        if line.find('/') != None {
+            let idx = line.find("//").unwrap_or(line.len());
+            line.replace_range(idx.., "");
+        }
+        if line.is_empty() == false {
+            let mut prev = ' ';
+            line.retain(|ch| {
+                let result = ch != ' ' || prev != ' ';
+                prev = ch;
+                result
+            });
+            tokens.push(line.trim().to_string());
+        }
+    }
+    tokens
+}
+
+
