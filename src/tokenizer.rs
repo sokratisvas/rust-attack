@@ -1,4 +1,3 @@
-use std::env;
 use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
 
@@ -14,7 +13,7 @@ pub fn file_contents(filename: String) -> io::Result<Vec<String>> {
     Ok(contents)
 }
 
-pub fn remove_comments(mut contents: Vec<String>) -> Vec<String> {
+pub fn remove_comments(contents: Vec<String>) -> Vec<String> {
     let mut tokens = Vec::new();
     for mut line in contents {
         if line.find('/') != None {
@@ -33,5 +32,3 @@ pub fn remove_comments(mut contents: Vec<String>) -> Vec<String> {
     }
     tokens
 }
-
-

@@ -138,7 +138,7 @@ pub fn arithmetic_command(command: String, cnt: u32) -> String {
     }
 }
 
-pub fn push_command(segment: String, address: String) -> String {
+pub fn push_command(segment: String, address: String, filename: String) -> String {
     match segment.as_str() {
         "local" | "argument" | "this" | "that" => format!(
             "@{0}\n\
@@ -185,14 +185,15 @@ pub fn push_command(segment: String, address: String) -> String {
         ),
 
         "static" => format!(
-            "@STC.{0}\n\
+            "@{1}.{0}\n\
                 D=M\n\
                 @SP\n\
                 A=M\n\
                 M=D\n\
                 @SP\n\
                 M=M+1\n",
-            address
+            address,
+            filename.clone()
         ),
 
         "pointer" => {
@@ -213,7 +214,7 @@ pub fn push_command(segment: String, address: String) -> String {
     }
 }
 
-pub fn pop_command(segment: String, address: String) -> String {
+pub fn pop_command(segment: String, address: String, filename: String) -> String {
     match segment.as_str() {
         "local" | "argument" | "this" | "that" => format!(
             "@{0}\n\
@@ -255,9 +256,10 @@ pub fn pop_command(segment: String, address: String) -> String {
                 M=M-1\n\
                 A=M\n\
                 D=M\n\
-                @STC.{0}\n\
+                @{1}.{0}\n\
                 M=D\n",
-            address
+            address,
+            filename.clone()
         ),
 
         "pointer" => {
@@ -282,7 +284,7 @@ pub fn branching_command(arg1: String, arg2: String) -> String {
         "label" => format!("({})\n", arg2),
         "goto" => format!("@{}\n0;JMP\n", arg2),
         "if-goto" => format!("@SP\nM=M-1\nA=M\nD=M\n@{}\nD;JNE\n", arg2),
-        _ => format!("error: invalid branch")
+        _ => format!("error: invalid branch"),
     }
 }
 
@@ -347,16 +349,14 @@ pub fn funcall(fun: String, args: String, cnt: u32) -> String {
         0;JMP\n\
         // label\n\
         ({0}_RETURN_{2})\n",
-        fun,
-        args,
-        cnt
+        fun, args, cnt
     )
 }
 
 pub fn fundecl(fun: String, args: String) -> String {
     let local_init: &str = "@SP\nA=M\nM=0\n@SP\nM=M+1\n";
     let mut block: String = String::new();
-    for i in 0..args.parse::<i32>().unwrap() {
+    for _i in 0..args.parse::<i32>().unwrap() {
         block.push_str(local_init);
     }
     format!("// function declaration\n({0})\n{1}", fun, block)
@@ -431,7 +431,8 @@ pub fn funret() -> String {
          // goto retaddr\n\
          @retaddr\n\
          A=M\n\
-         0;JMP\n") 
+         0;JMP\n"
+    )
 }
 
 pub fn bootstrap() -> String {
@@ -441,5 +442,6 @@ pub fn bootstrap() -> String {
          @SP\n\
          M=D\n
          {}",
-         funcall("Sys.init".to_string(), "0".to_string(), 0))
+        funcall("Sys.init".to_string(), "0".to_string(), 0)
+    )
 }

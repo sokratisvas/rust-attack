@@ -1,6 +1,6 @@
 use crate::commands;
 use std::fs::File;
-use std::io::{self, prelude::*, BufReader};
+use std::io::prelude::*;
 
 pub fn partition_instr(instruction: String) -> Vec<String> {
     instruction.split(' ').map(str::to_string).collect()
@@ -18,11 +18,11 @@ pub fn boolean_index(command: String) -> usize {
     }
 }
 
-pub fn asm(contents: Vec<String>, mult_files: bool) -> Vec<String> {
+pub fn asm(contents: Vec<String>, filename: String, mult_files: bool) -> Vec<String> {
     let mut asm_code: Vec<String> = Vec::new();
     let mut boolean_cnt: [u32; 3] = [0; 3];
     let mut call_cnt: u32 = 1;
-    
+
     if mult_files == true {
         asm_code.push(commands::bootstrap());
     }
@@ -53,18 +53,29 @@ pub fn asm(contents: Vec<String>, mult_files: bool) -> Vec<String> {
 
             3 => {
                 if instruction[0] == "push" {
-                    asm_code.push(
-                        commands::push_command(instruction[1].clone(), instruction[2].clone()));
-                } else if instruction[0] == "pop"{
-                    asm_code.push(
-                        commands::pop_command(instruction[1].clone(), instruction[2].clone()));
+                    asm_code.push(commands::push_command(
+                        instruction[1].clone(),
+                        instruction[2].clone(),
+                        filename.clone(),
+                    ));
+                } else if instruction[0] == "pop" {
+                    asm_code.push(commands::pop_command(
+                        instruction[1].clone(),
+                        instruction[2].clone(),
+                        filename.clone(),
+                    ));
                 } else if instruction[0] == "call" {
-                    asm_code.push(
-                        commands::funcall(instruction[1].clone(), instruction[2].clone(), call_cnt));
+                    asm_code.push(commands::funcall(
+                        instruction[1].clone(),
+                        instruction[2].clone(),
+                        call_cnt,
+                    ));
                     call_cnt += 1;
                 } else {
-                    asm_code.push(
-                        commands::fundecl(instruction[1].clone(), instruction[2].clone()));
+                    asm_code.push(commands::fundecl(
+                        instruction[1].clone(),
+                        instruction[2].clone(),
+                    ));
                 }
             }
 
@@ -76,7 +87,7 @@ pub fn asm(contents: Vec<String>, mult_files: bool) -> Vec<String> {
 }
 
 pub fn write_output(asm: Vec<String>, mut filename: String) -> std::io::Result<()> {
-    let mut outpath = String::new();
+    let outpath: String;
     if filename.ends_with(".vm") {
         outpath = filename.replace(".vm", ".asm");
     } else {
@@ -85,7 +96,9 @@ pub fn write_output(asm: Vec<String>, mut filename: String) -> std::io::Result<(
     };
     let mut output = File::create(outpath)?;
     for line in asm {
-        write!(output, "{}", line);
+        write!(output, "{}", line)
+            .map_err(|err| println!("{:?}", err))
+            .ok();
     }
     Ok(())
 }
